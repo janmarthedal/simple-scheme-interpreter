@@ -1,6 +1,7 @@
 use std::fmt;
 use std::iter::Peekable;
 
+#[derive(Debug, PartialEq)]
 pub enum Token {
     LParen,
     RParen,
@@ -82,5 +83,29 @@ impl<I: Iterator<Item = char>> Iterator for Tokenizer<I> {
 pub fn tokenize<I: Iterator<Item = char>>(iter: I) -> Tokenizer<I> {
     Tokenizer {
         iter: iter.peekable(),
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::{tokenize, Token};
+
+    #[test]
+    fn basics() {
+        let input = "(quote (testing 1 (2.0) -3.14e159))";
+        let tokens = tokenize(input.chars()).collect::<Vec<Token>>();
+        assert_eq!(vec![
+            Token::LParen,
+            Token::Identifier("quote".to_string()),
+            Token::LParen,
+            Token::Identifier("testing".to_string()),
+            Token::IntLiteral(1),
+            Token::LParen,
+            Token::FloatLiteral(2.0),
+            Token::RParen,
+            Token::FloatLiteral(-3.14e159),
+            Token::RParen,
+            Token::RParen
+        ], tokens);
     }
 }
