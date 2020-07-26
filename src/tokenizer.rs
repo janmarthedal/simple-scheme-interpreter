@@ -17,8 +17,8 @@ impl fmt::Display for Token {
             Token::RParen => write!(f, ")"),
             Token::Identifier(id) => write!(f, "{}", id),
             Token::StringLiteral(s) => write!(f, "\"{}\"", s),
-            Token::FloatLiteral(v) => write!(f, "{}f", v),
-            Token::IntLiteral(v) => write!(f, "{}i", v),
+            Token::FloatLiteral(v) => write!(f, "{:+.4e}", v),
+            Token::IntLiteral(v) => write!(f, "{}", v),
         }
     }
 }
@@ -48,7 +48,7 @@ impl<I: Iterator<Item = char>> Iterator for Tokenizer<I> {
                 loop {
                     match self.iter.next() {
                         Some('"') | None => break,
-                        Some(c) => s.push(c)
+                        Some(c) => s.push(c),
                     }
                 }
                 Some(Token::StringLiteral(s))
@@ -57,15 +57,13 @@ impl<I: Iterator<Item = char>> Iterator for Tokenizer<I> {
                 let mut id = c.to_string();
                 loop {
                     match self.iter.peek() {
-                        Some(&c2) => {
-                            if c2.is_whitespace() || c2 == '(' || c2 == ')' {
-                                break
-                            } else {
-                                id.push(c2);
-                                self.iter.next();
-                            }
+                        Some('(') | Some(')') => break,
+                        Some(c2) if c2.is_whitespace() => break,
+                        Some(c2) => {
+                            id.push(*c2);
+                            self.iter.next();
                         }
-                        None => break
+                        None => break,
                     }
                 }
                 if let Ok(v) = id.parse::<i64>() {
