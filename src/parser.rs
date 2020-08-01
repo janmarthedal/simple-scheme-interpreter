@@ -36,8 +36,7 @@ impl<I: Iterator<Item = Token>> Parser<I> {
                 Token::RParen => Err("Unexpected ')'".to_string()),
                 Token::Identifier(id) => Ok(Some(Expression::Identifier(id))),
                 Token::StringLiteral(st) => Ok(Some(Expression::StringLiteral(st))),
-                Token::FloatLiteral(v) => Ok(Some(Expression::FloatLiteral(v))),
-                Token::IntLiteral(v) => Ok(Some(Expression::IntLiteral(v))),
+                Token::NumberLiteral(v) => Ok(Some(Expression::NumberLiteral(v))),
             },
             None => Ok(None),
         }

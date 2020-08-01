@@ -1,5 +1,7 @@
+use crate::number::Number;
 use std::fmt;
 use std::iter::Peekable;
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
@@ -7,8 +9,7 @@ pub enum Token {
     RParen,
     Identifier(String),
     StringLiteral(String),
-    FloatLiteral(f64),
-    IntLiteral(i64),
+    NumberLiteral(Number),
 }
 
 impl fmt::Display for Token {
@@ -18,8 +19,7 @@ impl fmt::Display for Token {
             Token::RParen => write!(f, ")"),
             Token::Identifier(id) => write!(f, "{}", id),
             Token::StringLiteral(s) => write!(f, "\"{}\"", s),
-            Token::FloatLiteral(v) => write!(f, "{:+.4e}", v),
-            Token::IntLiteral(v) => write!(f, "{}", v),
+            Token::NumberLiteral(v) => write!(f, "{}", v),
         }
     }
 }
@@ -67,10 +67,8 @@ impl<I: Iterator<Item = char>> Iterator for Tokenizer<I> {
                         None => break,
                     }
                 }
-                if let Ok(v) = id.parse::<i64>() {
-                    Some(Token::IntLiteral(v))
-                } else if let Ok(v) = id.parse::<f64>() {
-                    Some(Token::FloatLiteral(v))
+                if let Ok(v) = Number::from_str(id.as_str()) {
+                    Some(Token::NumberLiteral(v))
                 } else {
                     Some(Token::Identifier(id))
                 }
@@ -99,11 +97,11 @@ mod test {
             Token::Identifier("quote".to_string()),
             Token::LParen,
             Token::Identifier("testing".to_string()),
-            Token::IntLiteral(1),
+            Token::NumberLiteral(Number::from(1)),
             Token::LParen,
-            Token::FloatLiteral(2.0),
+            Token::NumberLiteral(Number::from(2)),
             Token::RParen,
-            Token::FloatLiteral(-3.14e159),
+            Token::NumberLiteral(Number::from(-3.14e159)),
             Token::RParen,
             Token::RParen
         ], tokens);

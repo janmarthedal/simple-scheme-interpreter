@@ -1,7 +1,9 @@
 mod expression;
+mod number;
 mod parser;
 mod tokenizer;
 use expression::Expression;
+use number::Number;
 
 fn eval(expr: &Expression) -> Result<Expression, String> {
     match expr {
@@ -12,10 +14,13 @@ fn eval(expr: &Expression) -> Result<Expression, String> {
                 match operand {
                     Expression::Identifier(id) => {
                         if id == "+" {
-                            Ok(Expression::IntLiteral(elem_iter.try_fold(0i64, |acc, v| match v {
-                                Expression::IntLiteral(i) => Ok(acc + i),
-                                _ => Err("Expecting integer"),
-                            })?))
+                            Ok(Expression::NumberLiteral(elem_iter.try_fold(
+                                Number::from(0i64),
+                                |acc, v| match v {
+                                    Expression::NumberLiteral(i) => Ok(acc + *i),
+                                    _ => Err("Expecting integer"),
+                                },
+                            )?))
                         } else {
                             Err(format!("Undefined operand '{}'", id))
                         }
