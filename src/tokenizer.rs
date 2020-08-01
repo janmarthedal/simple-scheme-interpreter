@@ -1,7 +1,7 @@
-use crate::number::Number;
 use std::fmt;
 use std::iter::Peekable;
 use std::str::FromStr;
+use crate::number::Number;
 
 #[derive(Debug, PartialEq)]
 pub enum Token {

@@ -1,13 +1,16 @@
 use std::fmt;
+use std::rc::Rc;
 use crate::number::Number;
 
-#[derive(Debug,Clone)]
+#[derive(Clone)]
 pub enum Expression {
-    Void,
+    // Void,
     Combination(Vec<Expression>),
     Identifier(String),
     StringLiteral(String),
     NumberLiteral(Number),
+    // Procedure(Vec<String>, Box<Expression>),
+    BuiltinProcedure(Rc<dyn Fn(Vec<Expression>) -> Result<Expression, String>>),
 }
 
 impl fmt::Display for Expression {
@@ -20,7 +23,8 @@ impl fmt::Display for Expression {
             Expression::Identifier(id) => write!(f, "{}", id),
             Expression::StringLiteral(s) => write!(f, "\"{}\"", s),
             Expression::NumberLiteral(v) => write!(f, "{}", v),
-            Expression::Void => write!(f, "#void"),
+            // Expression::Procedure(_, _) => write!(f, "#procedure"),
+            Expression::BuiltinProcedure(_) => write!(f, "#builtin"),
         }
     }
 }
