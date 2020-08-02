@@ -32,23 +32,24 @@ impl Environment {
 
 fn eval(expr: &Expression, env: &Environment) -> Result<Expression, String> {
     match expr {
-        Expression::Identifier(_) => Err(format!("Not implemented")),
+        Expression::Identifier(id) => match env.lookup(id) {
+            Some(e) => Ok(e.clone()),
+            None => Err(format!("Undefined symbol '{}'", id)),
+        },
         Expression::Combination(elements) => {
             let mut elem_iter = elements.iter();
-            if let Some(operand) = elem_iter.next() {
+            if let Some(first_expr) = elem_iter.next() {
+                let operand = eval(first_expr, env)?;
                 match operand {
-                    Expression::Identifier(id) => match env.lookup(id) {
-                        Some(Expression::BuiltinProcedure(p)) => {
-                            let args = elem_iter
-                                .map(|e| eval(e, env))
-                                .collect::<Result<Vec<_>, String>>()?;
-                            let result = p(args)?;
-                            Ok(result)
-                        }
-                        Some(e) => Err(format!("Attempt to apply non-procedure '{}'", e)),
-                        None => Err(format!("Undefined operand '{}'", id)),
-                    },
-                    _ => Err("Expected procedure operand".to_string()),
+                    Expression::BuiltinProcedure(p) => {
+                        // run eval on arguments
+                        let args = elem_iter
+                            .map(|e| eval(e, env))
+                            .collect::<Result<Vec<_>, String>>()?;
+                        let result = p(args)?;
+                        Ok(result)
+                    }
+                    _ => Err(format!("Attempt to apply non-procedure '{}'", operand)),
                 }
             } else {
                 Err("Invalid syntax ()".to_string())
@@ -69,7 +70,7 @@ fn plus(args: Vec<Expression>) -> Result<Expression, String> {
 }
 
 fn main() {
-    let input = "(- 1 2 3 4 5)";
+    let input = "(+ 1 2 3 4 5)";
     let tokens = tokenizer::tokenize(input.chars());
 
     let mut global_env = Environment::new();
