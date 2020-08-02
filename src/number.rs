@@ -1,8 +1,8 @@
 use std::fmt;
-use std::ops::Add;
+use std::ops::{Add, Sub, Mul};
 use std::str::FromStr;
 
-#[derive(Debug,Clone,Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum Number {
     Int(i64),
     Float(f64),
@@ -20,8 +20,7 @@ impl From<f64> for Number {
     }
 }
 
-pub struct ParseNumberError {
-}
+pub struct ParseNumberError {}
 
 impl FromStr for Number {
     type Err = ParseNumberError;
@@ -46,16 +45,39 @@ impl fmt::Display for Number {
     }
 }
 
+impl Number {
+    fn apply_binary_op<OpInt, OpFloat>(self, other: Self, op_int: OpInt, op_float: OpFloat) -> Self
+    where
+        OpInt: Fn(i64, i64) -> i64,
+        OpFloat: Fn(f64, f64) -> f64,
+    {
+        match (self, other) {
+            (Number::Int(a), Number::Int(b)) => Self::Int(op_int(a, b)),
+            (Number::Float(a), Number::Float(b)) => Self::Float(op_float(a, b)),
+            (Number::Int(a), Number::Float(b)) => Self::Float(op_float(a as f64, b)),
+            (Number::Float(a), Number::Int(b)) => Self::Float(op_float(a, b as f64)),
+        }
+    }
+}
+
 impl Add for Number {
     type Output = Self;
-
     fn add(self, other: Self) -> Self {
-        match (self, other) {
-            (Number::Int(a), Number::Int(b)) => Self::Int(a + b),
-            (Number::Float(a), Number::Float(b)) => Self::Float(a + b),
-            (Number::Int(a), Number::Float(b)) => Self::Float(a as f64 + b),
-            (Number::Float(a), Number::Int(b)) => Self::Float(a + b as f64),
-        }
+        self.apply_binary_op(other, |a, b| a + b, |a, b| a + b)
+    }
+}
+
+impl Sub for Number {
+    type Output = Self;
+    fn sub(self, other: Self) -> Self {
+        self.apply_binary_op(other, |a, b| a - b, |a, b| a - b)
+    }
+}
+
+impl Mul for Number {
+    type Output = Self;
+    fn mul(self, other: Self) -> Self {
+        self.apply_binary_op(other, |a, b| a * b, |a, b| a * b)
     }
 }
 

@@ -64,19 +64,53 @@ fn plus(args: Vec<Expression>) -> Result<Expression, String> {
         Number::from(0),
         |acc, v| match v {
             Expression::NumberLiteral(i) => Ok(acc + *i),
-            _ => Err("Expecting integer"),
+            _ => Err("Expecting number"),
+        },
+    )?))
+}
+
+fn multiply(args: Vec<Expression>) -> Result<Expression, String> {
+    Ok(Expression::NumberLiteral(args.iter().try_fold(
+        Number::from(1),
+        |acc, v| match v {
+            Expression::NumberLiteral(i) => Ok(acc * *i),
+            _ => Err("Expecting number"),
+        },
+    )?))
+}
+
+fn minus(args: Vec<Expression>) -> Result<Expression, String> {
+    let mut arg_iter = args.iter();
+    let first_num = match arg_iter.next() {
+        Some(Expression::NumberLiteral(num)) => num,
+        Some(_) => return Err("Expecting number".to_string()),
+        None => return Err("Incorrect argument count in call (-)".to_string()),
+    };
+    Ok(Expression::NumberLiteral(arg_iter.try_fold(
+        *first_num,
+        |acc, v| match v {
+            Expression::NumberLiteral(i) => Ok(acc - *i),
+            _ => Err("Expecting number"),
         },
     )?))
 }
 
 fn main() {
-    let input = "(+ 1 2 3 4 5)";
+    let input = "(* 9 8 7 6)";
     let tokens = tokenizer::tokenize(input.chars());
 
     let mut global_env = Environment::new();
 
     global_env.push();
     global_env.insert("+".to_string(), Expression::BuiltinProcedure(Rc::new(plus)));
+    global_env.insert(
+        "-".to_string(),
+        Expression::BuiltinProcedure(Rc::new(minus)),
+    );
+    global_env.insert(
+        "*".to_string(),
+        Expression::BuiltinProcedure(Rc::new(multiply)),
+    );
 
     for expr in parser::Parser::new(tokens) {
         match expr {
