@@ -30,7 +30,7 @@ impl Environment {
     }
 }
 
-fn eval(expr: &Expression, env: &Environment) -> Result<Expression, String> {
+fn eval(expr: &Expression, env: &mut Environment) -> Result<Expression, String> {
     match expr {
         Expression::Identifier(id) => match env.lookup(id) {
             Some(e) => Ok(e.clone()),
@@ -39,6 +39,23 @@ fn eval(expr: &Expression, env: &Environment) -> Result<Expression, String> {
         Expression::Combination(elements) => {
             let mut elem_iter = elements.iter();
             if let Some(first_expr) = elem_iter.next() {
+                if let Expression::Identifier(id) = first_expr {
+                    if id.as_str() == "define" {
+                        let name_expr = elem_iter.next().ok_or("Invalid syntax".to_string())?;
+                        let body_expr = elem_iter.next().ok_or("Invalid syntax".to_string())?;
+                        if !elem_iter.next().is_none() {
+                            return Err("Invalid syntax".to_string());
+                        }
+                        let body_value = eval(body_expr, env)?;
+                        if let Expression::Identifier(name) = name_expr {
+                            env.insert(name.clone(), body_value);
+                        // } else if let Expression::Combination(comb) = name_expr {
+                        } else {
+                            return Err("Invalid syntax".to_string());
+                        }
+                        return Ok(Expression::Void);
+                    }
+                }
                 let operand = eval(first_expr, env)?;
                 match operand {
                     Expression::BuiltinProcedure(p) => {
@@ -59,7 +76,7 @@ fn eval(expr: &Expression, env: &Environment) -> Result<Expression, String> {
     }
 }
 
-fn plus(args: Vec<Expression>) -> Result<Expression, String> {
+fn builtin_add(args: Vec<Expression>) -> Result<Expression, String> {
     Ok(Expression::NumberLiteral(args.iter().try_fold(
         Number::from(0),
         |acc, v| match v {
@@ -69,7 +86,7 @@ fn plus(args: Vec<Expression>) -> Result<Expression, String> {
     )?))
 }
 
-fn multiply(args: Vec<Expression>) -> Result<Expression, String> {
+fn builtin_mul(args: Vec<Expression>) -> Result<Expression, String> {
     Ok(Expression::NumberLiteral(args.iter().try_fold(
         Number::from(1),
         |acc, v| match v {
@@ -79,7 +96,7 @@ fn multiply(args: Vec<Expression>) -> Result<Expression, String> {
     )?))
 }
 
-fn minus(args: Vec<Expression>) -> Result<Expression, String> {
+fn builtin_sub(args: Vec<Expression>) -> Result<Expression, String> {
     let mut arg_iter = args.iter();
     let first_num = match arg_iter.next() {
         Some(Expression::NumberLiteral(num)) => num,
@@ -96,25 +113,28 @@ fn minus(args: Vec<Expression>) -> Result<Expression, String> {
 }
 
 fn main() {
-    let input = "(* 9 8 7 6)";
+    let input = "(define size (+ 1 3))\nsize";
     let tokens = tokenizer::tokenize(input.chars());
 
     let mut global_env = Environment::new();
 
     global_env.push();
-    global_env.insert("+".to_string(), Expression::BuiltinProcedure(Rc::new(plus)));
+    global_env.insert(
+        "+".to_string(),
+        Expression::BuiltinProcedure(Rc::new(builtin_add)),
+    );
     global_env.insert(
         "-".to_string(),
-        Expression::BuiltinProcedure(Rc::new(minus)),
+        Expression::BuiltinProcedure(Rc::new(builtin_sub)),
     );
     global_env.insert(
         "*".to_string(),
-        Expression::BuiltinProcedure(Rc::new(multiply)),
+        Expression::BuiltinProcedure(Rc::new(builtin_mul)),
     );
 
     for expr in parser::Parser::new(tokens) {
         match expr {
-            Ok(ex) => match eval(&ex, &global_env) {
+            Ok(ex) => match eval(&ex, &mut global_env) {
                 Ok(value) => {
                     println!("{}", value);
                 }

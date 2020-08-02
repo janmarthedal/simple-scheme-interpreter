@@ -4,13 +4,13 @@ use crate::number::Number;
 
 #[derive(Clone)]
 pub enum Expression {
-    // Void,
     Combination(Vec<Expression>),
     Identifier(String),
     StringLiteral(String),
     NumberLiteral(Number),
     // Procedure(Vec<String>, Box<Expression>),
     BuiltinProcedure(Rc<dyn Fn(Vec<Expression>) -> Result<Expression, String>>),
+    Void,
 }
 
 impl fmt::Display for Expression {
@@ -25,6 +25,7 @@ impl fmt::Display for Expression {
             Expression::NumberLiteral(v) => write!(f, "{}", v),
             // Expression::Procedure(_, _) => write!(f, "#procedure"),
             Expression::BuiltinProcedure(_) => write!(f, "#builtin"),
+            Expression::Void => write!(f, ""),
         }
     }
 }
