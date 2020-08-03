@@ -8,7 +8,7 @@ pub enum Expression {
     Identifier(String),
     StringLiteral(String),
     NumberLiteral(Number),
-    // Procedure(Vec<String>, Box<Expression>),
+    Procedure(Vec<String>, Box<Expression>),
     BuiltinProcedure(Rc<dyn Fn(Vec<Expression>) -> Result<Expression, String>>),
     Void,
 }
@@ -23,7 +23,7 @@ impl fmt::Display for Expression {
             Expression::Identifier(id) => write!(f, "{}", id),
             Expression::StringLiteral(s) => write!(f, "\"{}\"", s),
             Expression::NumberLiteral(v) => write!(f, "{}", v),
-            // Expression::Procedure(_, _) => write!(f, "#procedure"),
+            Expression::Procedure(_, _) => write!(f, "#procedure"),
             Expression::BuiltinProcedure(_) => write!(f, "#builtin"),
             Expression::Void => write!(f, ""),
         }

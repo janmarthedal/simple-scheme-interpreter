@@ -19,9 +19,9 @@ impl Environment {
     fn push(&mut self) {
         self.stack.push(HashMap::new());
     }
-    /*fn pop(&mut self) {
+    fn pop(&mut self) {
         self.stack.pop();
-    }*/
+    }
     fn insert(&mut self, key: String, value: Expression) {
         self.stack.last_mut().unwrap().insert(key, value);
     }
@@ -46,10 +46,26 @@ fn eval(expr: &Expression, env: &mut Environment) -> Result<Expression, String> 
                         if !elem_iter.next().is_none() {
                             return Err("Invalid syntax".to_string());
                         }
-                        let body_value = eval(body_expr, env)?;
                         if let Expression::Identifier(name) = name_expr {
+                            let body_value = eval(body_expr, env)?;
                             env.insert(name.clone(), body_value);
-                        // } else if let Expression::Combination(comb) = name_expr {
+                        } else if let Expression::Combination(comb) = name_expr {
+                            let mut ids = comb
+                                .iter()
+                                .map(|e| match e {
+                                    Expression::Identifier(n) => Some(n.clone()),
+                                    _ => None,
+                                })
+                                .collect::<Option<Vec<String>>>()
+                                .ok_or("Invalid syntax".to_string())?;
+                            if ids.is_empty() {
+                                return Err("Invalid syntax".to_string());
+                            }
+                            let proc_name = ids.remove(0);
+                            env.insert(
+                                proc_name,
+                                Expression::Procedure(ids, Box::new(body_expr.clone())),
+                            );
                         } else {
                             return Err("Invalid syntax".to_string());
                         }
@@ -63,8 +79,22 @@ fn eval(expr: &Expression, env: &mut Environment) -> Result<Expression, String> 
                         let args = elem_iter
                             .map(|e| eval(e, env))
                             .collect::<Result<Vec<_>, String>>()?;
-                        let result = p(args)?;
-                        Ok(result)
+                        p(args)
+                    }
+                    Expression::Procedure(arg_names, body) => {
+                        let args = elem_iter
+                            .map(|e| eval(e, env))
+                            .collect::<Result<Vec<_>, String>>()?;
+                        if arg_names.len() != args.len() {
+                            return Err("Wrong number of arguments".to_string());
+                        }
+                        env.push();
+                        for (var, value) in arg_names.iter().zip(args.iter()) {
+                            env.insert(var.clone(), value.clone());
+                        }
+                        let result = eval(body.as_ref(), env);
+                        env.pop();
+                        result
                     }
                     _ => Err(format!("Attempt to apply non-procedure '{}'", operand)),
                 }
@@ -113,7 +143,7 @@ fn builtin_sub(args: Vec<Expression>) -> Result<Expression, String> {
 }
 
 fn main() {
-    let input = "(define size (+ 1 3))\nsize";
+    let input = "(define (f a b) (+ a b))\n(f 1 2)\nf";
     let tokens = tokenizer::tokenize(input.chars());
 
     let mut global_env = Environment::new();
