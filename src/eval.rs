@@ -1,5 +1,5 @@
-use crate::expression::Expression;
 use crate::environment::Environment;
+use crate::expression::Expression;
 
 pub fn eval(expr: &Expression, env: &mut Environment) -> Result<Expression, String> {
     match expr {
@@ -80,52 +80,79 @@ pub fn eval(expr: &Expression, env: &mut Environment) -> Result<Expression, Stri
 #[cfg(test)]
 mod test {
     use super::eval;
-    use crate::number::Number;
-    use crate::tokenizer::tokenize;
-    use crate::parser::Parser;
     use crate::environment::create_root_environment;
     use crate::expression::Expression;
+    use crate::number::Number;
+    use crate::parser::Parser;
+    use crate::tokenizer::tokenize;
 
     fn single_expr_eq(input: &str, expected: Expression) {
-        let tokens = tokenize(input.chars());   
+        let tokens = tokenize(input.chars());
         let mut root_env = create_root_environment();
         let parser = Parser::new(tokens);
-        let results: Result<Vec<Expression>, String> = parser.map(|e| eval(&e.unwrap(), &mut root_env)).collect();
+        let results: Result<Vec<Expression>, String> =
+            parser.map(|e| eval(&e.unwrap(), &mut root_env)).collect();
         assert_eq!(results.unwrap().last().unwrap(), &expected);
+    }
+
+    fn int_expr(v: i64) -> Expression {
+        Expression::NumberLiteral(Number::from(v))
     }
 
     #[test]
     fn literal_number() {
-        single_expr_eq("486", Expression::NumberLiteral(Number::from(486)));
+        single_expr_eq("486", int_expr(486));
     }
 
     #[test]
     fn simple_add() {
-        single_expr_eq("(+ 137 349)", Expression::NumberLiteral(Number::from(486)));
+        single_expr_eq("(+ 137 349)", int_expr(486));
     }
 
     #[test]
     fn simple_sub() {
-        single_expr_eq("(- 1000 334)", Expression::NumberLiteral(Number::from(666)));
+        single_expr_eq("(- 1000 334)", int_expr(666));
     }
 
     #[test]
     fn simple_mul() {
-        single_expr_eq("(* 5 99)", Expression::NumberLiteral(Number::from(495)));
+        single_expr_eq("(* 5 99)", int_expr(495));
     }
 
-    #[test] #[ignore]
+    #[test]
+    #[ignore]
     fn simple_div() {
-        single_expr_eq("(/ 10 5)", Expression::NumberLiteral(Number::from(2)));
+        single_expr_eq("(/ 10 5)", int_expr(2));
     }
 
     #[test]
     fn complex_arith() {
-        single_expr_eq("(+ (* 3 (+ (* 2 4) (+ 3 5))) (+ (- 10 7) 6))", Expression::NumberLiteral(Number::from(57)));
+        single_expr_eq("(+ (* 3 (+ (* 2 4) (+ 3 5))) (+ (- 10 7) 6))", int_expr(57));
     }
 
     #[test]
     fn simple_define() {
-        single_expr_eq("(define size 2) size", Expression::NumberLiteral(Number::from(2)));
+        single_expr_eq("(define size 2) size", int_expr(2));
+    }
+
+    #[test]
+    fn more_defines() {
+        single_expr_eq(
+            "(define pi 3.14159) (define radius 10) (define circumference (* 2 pi radius)) circumference", 
+            Expression::NumberLiteral(Number::from(62.8318))
+        );
+    }
+
+    #[test]
+    fn simple_procedure() {
+        single_expr_eq("(define (square x) (* x x)) (square 21)", int_expr(441));
+    }
+
+    #[test]
+    fn more_procedures() {
+        single_expr_eq(
+            "(define (square x) (* x x)) (define (sum-of-squares x y) (+ (square x) (square y))) (define (f a) (sum-of-squares (+ a 1) (* a 2))) (f 5)",
+            int_expr(136)
+        );
     }
 }
