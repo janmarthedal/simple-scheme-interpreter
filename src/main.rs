@@ -4,11 +4,11 @@ fn main() {
     let input = "(define (f a b) (+ a b))\n(f 1 2)\nf";
     let tokens = tokenize(input.chars());
 
-    let mut root_env = create_root_environment();
+    let mut env = create_root_environment();
 
     for expr in Parser::new(tokens) {
         match expr {
-            Ok(ex) => match eval(&ex, &mut root_env) {
+            Ok(ex) => match eval(&ex, &mut env) {
                 Ok(value) => {
                     println!("{}", value);
                 }

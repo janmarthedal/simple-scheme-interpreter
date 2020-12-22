@@ -89,10 +89,9 @@ mod test {
     fn single_expr_eq(input: &str, expected: Expression) {
         let tokens = tokenize(input.chars());   
         let mut root_env = create_root_environment();
-        let mut parser = Parser::new(tokens);
-        let ex1 = parser.next();
-        assert_eq!(eval(&ex1.unwrap().unwrap(), &mut root_env).unwrap(), expected);
-        assert!(parser.next().is_none());
+        let parser = Parser::new(tokens);
+        let results: Result<Vec<Expression>, String> = parser.map(|e| eval(&e.unwrap(), &mut root_env)).collect();
+        assert_eq!(results.unwrap().last().unwrap(), &expected);
     }
 
     #[test]
@@ -115,8 +114,18 @@ mod test {
         single_expr_eq("(* 5 99)", Expression::NumberLiteral(Number::from(495)));
     }
 
-    /*#[test]
+    #[test] #[ignore]
     fn simple_div() {
         single_expr_eq("(/ 10 5)", Expression::NumberLiteral(Number::from(2)));
-    }*/
+    }
+
+    #[test]
+    fn complex_arith() {
+        single_expr_eq("(+ (* 3 (+ (* 2 4) (+ 3 5))) (+ (- 10 7) 6))", Expression::NumberLiteral(Number::from(57)));
+    }
+
+    #[test]
+    fn simple_define() {
+        single_expr_eq("(define size 2) size", Expression::NumberLiteral(Number::from(2)));
+    }
 }
