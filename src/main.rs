@@ -1,4 +1,4 @@
-use simple_scheme_interpreter::{eval::{create_root_environment, eval}, parser::Parser, tokenizer::tokenize};
+use simple_scheme_interpreter::{environment::create_root_environment, eval::eval, parser::Parser, tokenizer::tokenize};
 
 fn main() {
     let input = "(define (f a b) (+ a b))\n(f 1 2)\nf";
