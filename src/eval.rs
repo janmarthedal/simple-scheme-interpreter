@@ -76,3 +76,47 @@ pub fn eval(expr: &Expression, env: &mut Environment) -> Result<Expression, Stri
         other => Ok(other.clone()),
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::eval;
+    use crate::number::Number;
+    use crate::tokenizer::tokenize;
+    use crate::parser::Parser;
+    use crate::environment::create_root_environment;
+    use crate::expression::Expression;
+
+    fn single_expr_eq(input: &str, expected: Expression) {
+        let tokens = tokenize(input.chars());   
+        let mut root_env = create_root_environment();
+        let mut parser = Parser::new(tokens);
+        let ex1 = parser.next();
+        assert_eq!(eval(&ex1.unwrap().unwrap(), &mut root_env).unwrap(), expected);
+        assert!(parser.next().is_none());
+    }
+
+    #[test]
+    fn literal_number() {
+        single_expr_eq("486", Expression::NumberLiteral(Number::from(486)));
+    }
+
+    #[test]
+    fn simple_add() {
+        single_expr_eq("(+ 137 349)", Expression::NumberLiteral(Number::from(486)));
+    }
+
+    #[test]
+    fn simple_sub() {
+        single_expr_eq("(- 1000 334)", Expression::NumberLiteral(Number::from(666)));
+    }
+
+    #[test]
+    fn simple_mul() {
+        single_expr_eq("(* 5 99)", Expression::NumberLiteral(Number::from(495)));
+    }
+
+    /*#[test]
+    fn simple_div() {
+        single_expr_eq("(/ 10 5)", Expression::NumberLiteral(Number::from(2)));
+    }*/
+}

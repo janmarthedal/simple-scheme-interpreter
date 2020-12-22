@@ -93,7 +93,7 @@ mod test {
     #[test]
     fn basics() {
         let input = "(quote (testing 1 (2.0) -3.14e159))";
-        let tokens = tokenize(input.chars()).collect::<Vec<Token>>();
+        let tokens: Vec<Token> = tokenize(input.chars()).collect();
         assert_eq!(
             vec![
                 Token::LParen,
