@@ -120,7 +120,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn simple_div() {
         single_expr_eq("(/ 10 5)", int_expr(2));
     }

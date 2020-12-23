@@ -62,6 +62,22 @@ fn builtin_sub(args: Vec<Expression>) -> Result<Expression, String> {
     )?))
 }
 
+fn builtin_div(args: Vec<Expression>) -> Result<Expression, String> {
+    let mut arg_iter = args.iter();
+    let first_num = match arg_iter.next() {
+        Some(Expression::NumberLiteral(num)) => num,
+        Some(_) => return Err("Expecting number".to_string()),
+        None => return Err("Incorrect argument count in call (/)".to_string()),
+    };
+    Ok(Expression::NumberLiteral(arg_iter.try_fold(
+        *first_num,
+        |acc, v| match v {
+            Expression::NumberLiteral(i) => Ok(acc / *i),
+            _ => Err("Expecting number"),
+        },
+    )?))
+}
+
 pub fn create_root_environment() -> Environment {
     let mut root_env = Environment::new();
 
@@ -78,6 +94,10 @@ pub fn create_root_environment() -> Environment {
     root_env.insert(
         "*".to_string(),
         Expression::BuiltinProcedure(Rc::new(builtin_mul)),
+    );
+    root_env.insert(
+        "/".to_string(),
+        Expression::BuiltinProcedure(Rc::new(builtin_div)),
     );
 
     root_env

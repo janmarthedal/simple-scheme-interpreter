@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul, Sub, Div};
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy)]
@@ -83,6 +83,21 @@ impl Mul for Number {
     type Output = Self;
     fn mul(self, other: Self) -> Self {
         self.apply_binary_op(other, |a, b| a * b, |a, b| a * b)
+    }
+}
+
+impl Div for Number {
+    type Output = Self;
+    fn div(self, other: Self) -> Self {
+        if let (Number::Int(a), Number::Int(b)) = (self, other) {
+            if a % b == 0 {
+                Self::Int(a / b)
+            } else {
+                Self::Float(a as f64 / b as f64)
+            }
+        } else {
+            self.apply_binary_op(other, |a, b| a / b, |a, b| a / b)
+        }
     }
 }
 
