@@ -9,6 +9,7 @@ pub enum Expression {
     Identifier(String),
     StringLiteral(String),
     NumberLiteral(Number),
+    BooleanLiteral(bool),
     Procedure(Vec<String>, Box<Expression>),
     BuiltinProcedure(Rc<dyn Fn(Vec<Expression>) -> Result<Expression, String>>),
     Void,
@@ -24,6 +25,7 @@ impl fmt::Display for Expression {
             Expression::Identifier(id) => write!(f, "{}", id),
             Expression::StringLiteral(s) => write!(f, "\"{}\"", s),
             Expression::NumberLiteral(v) => write!(f, "{}", v),
+            Expression::BooleanLiteral(b) => write!(f, "#{}", if *b { "t" } else { "f" }),
             Expression::Procedure(_, _) => write!(f, "#procedure"),
             Expression::BuiltinProcedure(_) => write!(f, "#builtin"),
             Expression::Void => write!(f, ""),
@@ -44,6 +46,7 @@ impl PartialEq for Expression {
             (Expression::Identifier(i1), Expression::Identifier(i2)) => i1 == i2,
             (Expression::StringLiteral(s1), Expression::StringLiteral(s2)) => s1 == s2,
             (Expression::NumberLiteral(n1), Expression::NumberLiteral(n2)) => n1 == n2,
+            (Expression::BooleanLiteral(b1), Expression::BooleanLiteral(b2)) => b1 == b2,
             (Expression::Void, Expression::Void) => true,
             _ => false
         }

@@ -11,7 +11,7 @@ pub fn eval(expr: &Expression, env: &mut Environment) -> Result<Expression, Stri
             let mut elem_iter = elements.iter();
             if let Some(first_expr) = elem_iter.next() {
                 if let Expression::Identifier(id) = first_expr {
-                    if id.as_str() == "define" {
+                    if id == "define" {
                         let name_expr = elem_iter.next().ok_or("Invalid syntax".to_string())?;
                         let body_expr = elem_iter.next().ok_or("Invalid syntax".to_string())?;
                         if !elem_iter.next().is_none() {
@@ -40,6 +40,27 @@ pub fn eval(expr: &Expression, env: &mut Environment) -> Result<Expression, Stri
                         } else {
                             return Err("Invalid syntax".to_string());
                         }
+                        return Ok(Expression::Void);
+                    } else if id == "cond" {
+                        for clause in elem_iter {
+                            match clause {
+                                Expression::Combination(e) => {
+                                    if e.len() != 2 {
+                                        return Err("Expecting pair as cond clause".to_string());
+                                    }
+                                    let predicate = eval(&e[0], env)?;
+                                    match predicate {
+                                        Expression::BooleanLiteral(false) => {}
+                                        _ => {
+                                            let value = eval(&e[1], env)?;
+                                            return Ok(value);
+                                        }
+                                    }
+                                }
+                                _ => return Err("Invalid syntax".to_string()),
+                            }
+                        }
+                        // TODO return unspecified
                         return Ok(Expression::Void);
                     }
                 }
@@ -115,6 +136,11 @@ mod test {
     }
 
     #[test]
+    fn unary_minus() {
+        single_expr_eq("(- 42)", int_expr(-42));
+    }
+
+    #[test]
     fn simple_mul() {
         single_expr_eq("(* 5 99)", int_expr(495));
     }
@@ -153,5 +179,15 @@ mod test {
             "(define (square x) (* x x)) (define (sum-of-squares x y) (+ (square x) (square y))) (define (f a) (sum-of-squares (+ a 1) (* a 2))) (f 5)",
             int_expr(136)
         );
+    }
+
+    #[test]
+    fn literal_true() {
+        single_expr_eq("#t", Expression::BooleanLiteral(true));
+    }
+
+    #[test]
+    fn literal_false() {
+        single_expr_eq("#f", Expression::BooleanLiteral(false));
     }
 }

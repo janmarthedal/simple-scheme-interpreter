@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::{Add, Mul, Sub, Div};
+use std::ops::{Add, Mul, Sub, Div, Neg};
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy)]
@@ -65,30 +65,40 @@ impl Number {
     }
 }
 
+impl Neg for Number {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        match self {
+            Number::Int(v) => Number::Int(-v),
+            Number::Float(v) => Number::Float(-v)
+        }
+    }
+}
+
 impl Add for Number {
     type Output = Self;
-    fn add(self, other: Self) -> Self {
+    fn add(self, other: Self) -> Self::Output {
         self.apply_binary_op(other, |a, b| a + b, |a, b| a + b)
     }
 }
 
 impl Sub for Number {
     type Output = Self;
-    fn sub(self, other: Self) -> Self {
+    fn sub(self, other: Self) -> Self::Output {
         self.apply_binary_op(other, |a, b| a - b, |a, b| a - b)
     }
 }
 
 impl Mul for Number {
     type Output = Self;
-    fn mul(self, other: Self) -> Self {
+    fn mul(self, other: Self) -> Self::Output {
         self.apply_binary_op(other, |a, b| a * b, |a, b| a * b)
     }
 }
 
 impl Div for Number {
     type Output = Self;
-    fn div(self, other: Self) -> Self {
+    fn div(self, other: Self) -> Self::Output {
         if let (Number::Int(a), Number::Int(b)) = (self, other) {
             if a % b == 0 {
                 Self::Int(a / b)

@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::number::Number;
 use crate::expression::Expression;
+use crate::number::Number;
 
 pub struct Environment {
     stack: Vec<HashMap<String, Expression>>,
@@ -53,6 +53,9 @@ fn builtin_sub(args: Vec<Expression>) -> Result<Expression, String> {
         Some(_) => return Err("Expecting number".to_string()),
         None => return Err("Incorrect argument count in call (-)".to_string()),
     };
+    if args.len() == 1 {
+        return Ok(Expression::NumberLiteral(-*first_num));
+    }
     Ok(Expression::NumberLiteral(arg_iter.try_fold(
         *first_num,
         |acc, v| match v {
@@ -78,6 +81,10 @@ fn builtin_div(args: Vec<Expression>) -> Result<Expression, String> {
     )?))
 }
 
+// fn builtin_greater_than(args: Vec<Expression>) -> Result<Expression, String> {
+//     Ok(Expression::Void)
+// }
+
 pub fn create_root_environment() -> Environment {
     let mut root_env = Environment::new();
 
@@ -99,6 +106,9 @@ pub fn create_root_environment() -> Environment {
         "/".to_string(),
         Expression::BuiltinProcedure(Rc::new(builtin_div)),
     );
+    root_env.insert("#t".to_string(), Expression::BooleanLiteral(true));
+    root_env.insert("#f".to_string(), Expression::BooleanLiteral(false));
+    // root_env.insert(">".to_string(), Expression::BuiltinProcedure(Rc::new(builtin_greater_than)));
 
     root_env
 }
