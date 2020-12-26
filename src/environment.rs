@@ -81,9 +81,53 @@ fn builtin_div(args: Vec<Expression>) -> Result<Expression, String> {
     )?))
 }
 
-// fn builtin_greater_than(args: Vec<Expression>) -> Result<Expression, String> {
-//     Ok(Expression::Void)
-// }
+fn extract_numbers(args: Vec<Expression>) -> Result<Vec<Number>, String> {
+    args.iter()
+        .map(|e| match e {
+            Expression::NumberLiteral(n) => Ok(n.clone()),
+            _ => Err("Expecting number".to_string()),
+        })
+        .collect()
+}
+
+fn builtin_greater_than(args: Vec<Expression>) -> Result<Expression, String> {
+    let nums = extract_numbers(args)?;
+    if nums.len() <= 1 {
+        return Ok(Expression::BooleanLiteral(true));
+    }
+    let result = nums
+        .iter()
+        .enumerate()
+        .skip(1)
+        .all(|(index, e)| nums[index - 1] > *e);
+    Ok(Expression::BooleanLiteral(result))
+}
+
+fn builtin_less_than(args: Vec<Expression>) -> Result<Expression, String> {
+    let nums = extract_numbers(args)?;
+    if nums.len() <= 1 {
+        return Ok(Expression::BooleanLiteral(true));
+    }
+    let result = nums
+        .iter()
+        .enumerate()
+        .skip(1)
+        .all(|(index, e)| nums[index - 1] < *e);
+    Ok(Expression::BooleanLiteral(result))
+}
+
+fn builtin_equal(args: Vec<Expression>) -> Result<Expression, String> {
+    let nums = extract_numbers(args)?;
+    if nums.len() <= 1 {
+        return Ok(Expression::BooleanLiteral(true));
+    }
+    let result = nums
+        .iter()
+        .enumerate()
+        .skip(1)
+        .all(|(index, e)| nums[index - 1] == *e);
+    Ok(Expression::BooleanLiteral(result))
+}
 
 pub fn create_root_environment() -> Environment {
     let mut root_env = Environment::new();
@@ -108,7 +152,18 @@ pub fn create_root_environment() -> Environment {
     );
     root_env.insert("#t".to_string(), Expression::BooleanLiteral(true));
     root_env.insert("#f".to_string(), Expression::BooleanLiteral(false));
-    // root_env.insert(">".to_string(), Expression::BuiltinProcedure(Rc::new(builtin_greater_than)));
+    root_env.insert(
+        ">".to_string(),
+        Expression::BuiltinProcedure(Rc::new(builtin_greater_than)),
+    );
+    root_env.insert(
+        "<".to_string(),
+        Expression::BuiltinProcedure(Rc::new(builtin_less_than)),
+    );
+    root_env.insert(
+        "=".to_string(),
+        Expression::BuiltinProcedure(Rc::new(builtin_equal)),
+    );
 
     root_env
 }
